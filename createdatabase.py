@@ -106,5 +106,4 @@ def get_all_categories(main_categories):
         count += 1
 
 create_categories_table()
-get_all_categories(get_main_categorie)s(save_db=True))
-
+get_all_categories(get_main_categories(save_db=True))
