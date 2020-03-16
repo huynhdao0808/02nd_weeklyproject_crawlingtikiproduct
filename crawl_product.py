@@ -3,11 +3,23 @@ import requests
 import sqlite3
 from collections import deque
 import re
-
-from createdatabase import get_url, Category
+import functools
 
 conn = sqlite3.connect('tiki.db')
 cur = conn.cursor()
+
+def debug(func):
+    """Print the function signature and return value"""
+    @functools.wraps(func)
+    def wrapper_debug(*args, **kwargs):
+        args_repr = [repr(a) for a in args]                      # 1
+        kwargs_repr = [f"{k}={v!r}" for k, v in kwargs.items()]  # 2
+        signature = ", ".join(args_repr + kwargs_repr)           # 3
+        print(f"Calling {func.__name__}({signature})")
+        value = func(*args, **kwargs)
+        print(f"{func.__name__!r} returned {value!r}")           # 4
+        return value
+    return wrapper_debug 
 
 def create_product_table():
     query ="""
@@ -17,8 +29,9 @@ def create_product_table():
         url TEXT,
         price INT,
         brand TEXT,
-        sku BIGINT,
-        category_id INT,
+        productid INT,
+        cat_id INT,
+        img_link TEXT,
         create_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """
@@ -29,24 +42,25 @@ def create_product_table():
         print('ERROR BY CREATE TABLE', err)
 
 class Product:
-    def __init__(self, pro_id, name, url, price, brand, sku, cat_id):
+    def __init__(self, pro_id, name, url, price, brand, productid, cat_id,img_link):
         self.pro_id = pro_id
         self.name = name
         self.url = url
         self.price = price
         self.brand = brand
-        self.sku = sku
+        self.productid = productid
         self.cat_id = cat_id
+        self.img_link = img_link
 
     def __repr__(self):
-        return "ID: {}, Name: {}, URL: {}, Price: {}, Brand: {}, SKU: {}, Category: {}".format(self.pro_id, self.name, self.url, self.price, self.brand, self.sku, self.cat_id)
+        return "ID: {}, Name: {}, URL: {}, Price: {}, Brand: {}, PRODUCT-ID: {}, Category: {}, Image Link: {}".format(self.pro_id, self.name, self.url, self.price, self.brand, self.productid, self.cat_id, self.img_link)
 
     def save_into_db(self):
         query = """
-            INSERT INTO products (name, url, price, brand, sku, cat_id)
-            VALUES (?, ?, ?, ?, ?, ?);
+            INSERT INTO products (name, url, price, brand, productid, cat_id, img_link)
+            VALUES (?, ?, ?, ?, ?, ? , ?);
         """
-        val = (self.name, self.url, self.price, self.brand, self.sku, self.cat_id)
+        val = (self.name, self.url, self.price, self.brand, self.productid, self.cat_id, self.img_link)
         try:
             cur.execute(query, val)
             conn.commit()
@@ -54,16 +68,45 @@ class Product:
         except Exception as err:
             print('ERROR BY INSERT:', err)
 
-def get_categories(limit, offset):
+class Category:
+    def __init__(self, cat_id, name, url, parent_id):
+        self.cat_id = cat_id
+        self.name = name
+        self.url = url
+        self.parent_id = parent_id
+
+    def __repr__(self):
+        return "ID: {}, Name: {}, URL: {}, Parent_id: {}".format(self.cat_id, self.name, self.url, self.parent_id)
+
+    def save_into_db(self):
+        query = """
+            INSERT INTO categories (name, url, parent_id)
+            VALUES (?, ?, ?);
+        """
+        val = (self.name, self.url, self.parent_id)
+        try:
+            cur.execute(query, val)
+            self.cat_id = cur.lastrowid
+            conn.commit()
+        except Exception as err:
+            print('ERROR BY INSERT:', err)
+
+def get_url(url):
+    try:
+        response = requests.get(url).text
+        response = BeautifulSoup(response, 'html.parser')
+        return response
+    except Exception as err:
+            print('ERROR BY REQUEST:', err)
+
+def get_categories():
     category_list = []
     query = """
             SELECT *
             FROM categories
-            LIMIT ? OFFSET ?
         """
-    val = (limit, offset)
     try:
-        categories_data = cur.execute(query, val)
+        categories_data = cur.execute(query)
     except Exception as err:
         print('ERROR BY SELECT:', err)
     for category in categories_data:
@@ -86,27 +129,38 @@ def get_parent_list():
     except Exception as err:
         print('ERROR BY SELECT DISTINCT:', err)
 
-def crawl_product(categories_list, save_db=False):
+def crawl_product(soup,category,save_db=False):
+    product_list = soup.findAll('div',{'class':'product-item'})
+    for product in product_list:
+        _url = product.a['href']
+        _name = product['data-title']
+        _productid = product['data-id']
+        _brand = product['data-brand']
+        _price = product['data-price']
+        _cat_id = category.cat_id
+        _img_link = product.a.div.span.img['src']
+        new_product = Product(None,_name,_url,_price,_brand,_productid,_cat_id,_img_link)
+        print(new_product)
+        if save_db==True:
+            new_product.save_into_db()
+
+def crawl_all_product(categories_list, save_db=False):
     #parent_list = get_parent_list()
     parent_list = []
     for category in categories_list:
-        if category.cat_id not in parent_list:
+        if (category.cat_id,) not in parent_list:
             soup = get_url(category.url)
-            product_list = soup.findAll('div',{'class':"product-item    "})
-            for product in product_list:
-                _url = product.a['href']
-                soup = get_url(_url)
-                _name = soup.find('h1', {'class':'item-name'}).text
-                _sku = int(soup.find('div',{'class':"item-brand item-sku"}).p.text.strip())
-                _brand = soup.find('div',{'class':"item-brand"}).p.text
-                _price_coarse = soup.find('span',{'id':"span-price"}).text
-                _regex = '[\d+\.]+'
-                _price = int(re.sub('\.','',re.findall(_regex,_price_coarse)[0]))
-                _cat_id = category.cat_id
-                new_product = Product(None,_name,_url,_price,_brand,_sku,_cat_id)
-                print(new_product)
-                if save_db==True:
-                    new_product.save_into_db()
+            crawl_product(soup,category,save_db)
+            try:
+                max_page = int(soup.find('div',{'class':'list-pager'}).text.split()[-1])
+                if max_page >2:
+                    for i in range(2,max_page+1):
+                        soup = get_url(f"{category.url}&page={i}")
+                        crawl_product(soup,category,save_db)
+            except: pass
 
 create_product_table()
-crawl_product([Category(1,'abc','https://tiki.vn/may-tinh-bang/c1794?src=c.1789.hamburger_menu_fly_out_banner&_lc=Vk4wMzkwMDEwMDQ%3D',2)])
+#cur.execute('DROP TABLE products;')
+#conn.commit()
+
+crawl_all_product(get_categories(),save_db=True)

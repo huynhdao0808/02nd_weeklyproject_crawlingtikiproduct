@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Title</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</head>
+
+<body>
+    <div id="carouselExampleSlidesOnly" class="carousel slide" data-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <img class="d-block w-100" src="https://magiamgia247.vn/wp-content/uploads/2019/05/Tiki-l%C3%A0-g%C3%AC.jpg" alt="First slide" style="margin: 0 0 -15% 0;">
+            </div>
+            <div class="carousel-item">
+                <img class="d-block w-100" src="..." alt="Second slide">
+            </div>
+            <div class="carousel-item">
+                <img class="d-block w-100" src="..." alt="Third slide">
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <p class="text-center" style="font-size: 50px; color:gray">|</p>
+        <p class='text-center' style="font-size: 60px; color:gray"><strong>TIKI PRODUCT ANALYTICS</strong></p>
+        <p class="text-center" style="font-size: 50px; color:gray">|</p>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 50px; color:gray">{{data['nototal']}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left pt-3" style="font-size: 30px; color:gray">products</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 50px; color:gray">{{data['nocat']}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left pt-3" style="font-size: 30px; color:gray">categories</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 50px; color:gray">{{data['nobrand']}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left pt-3" style="font-size: 30px; color:gray">brands</p>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col">
+                <p class="text-right pt-3" style="font-size: 30px; color:gray">Average price</p>
+            </div>
+            <div class="col">
+                <p class="text-left pt" style="font-size: 50px; color:gray">{{data['avgprice']}}</p>
+            </div>
+        </div>
+        <p class="text-center" style="font-size: 50px; color:gray">|</p>
+        <p class="text-center" style="font-size: 50px; color:gray">Top 5 brands</p>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 30px; color:gray">Brand</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">No of Products</p>
+            </div>
+        {%for x in data['top5brands'] %}
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 30px; color:gray">{{x[0]}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">{{x[1]}}</p>
+            </div>
+        {%endfor%}
+        <p class="text-center" style="font-size: 50px; color:gray">Top 5 categories</p>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 30px; color:gray">Category</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">No of Product</p>
+            </div>
+        {%for x in data['top5cats'] %}
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 30px; color:gray">{{x[0]}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">{{x[1]}}</p>
+            </div>
+        {%endfor%}
+        <p class="text-center" style="font-size: 50px; color:gray">Top 5 highest pice</p>
+        <div class="row">
+            <div class="col">
+                <p class="text-right" style="font-size: 30px; color:gray">Name</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">Price</p>
+            </div>
+        {%for x in data['top5highest'] %}
+        <div class="row">
+            <div class="col">
+                <a href="x[3]"><img src="x[2]" alt=""></a>
+                <p class="text-right" style="font-size: 30px; color:gray">{{x[0]}}</p>
+            </div>
+            <div class="col">
+                <p class="text-left" style="font-size: 30px; color:gray">{{x[1]}}</p>
+            </div>
+        {%endfor%}
+        
+
+    </div>
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+        crossorigin="anonymous"></script>
+</body>
+
+</html>
